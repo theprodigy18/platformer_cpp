@@ -19,4 +19,6 @@ namespace drop::platform
     void* PlatformLoadDynamicFunction(void* dll, char* funcName);
     bool  PlatformFreeDynamicLibrary(void* dll);
 
+    void PlatformFillKeyCodeLookupTable();
+
 } // namespace drop::platform

@@ -6,7 +6,7 @@ namespace drop::renderer
 {
     constexpr i32 MAX_TRANSFORMS {1000};
 
-    struct OrtographicCamera2D
+    struct OrthographicCamera2D
     {
         f32        zoom {1.0f};
         math::Vec2 dimensions;
@@ -23,13 +23,16 @@ namespace drop::renderer
 
     struct RenderData
     {
-        OrtographicCamera2D gameCamera {};
-        OrtographicCamera2D uiCamera {};
-        i32                 transformCount {0};
-        Transform           transforms[MAX_TRANSFORMS];
+        OrthographicCamera2D gameCamera {};
+        OrthographicCamera2D uiCamera {};
+        i32                  transformCount {0};
+        Transform            transforms[MAX_TRANSFORMS];
     };
 
     extern RenderData* g_renderData;
 
-    void DrawSprite(resources::SpriteID id, math::Vec2 pos, math::Vec2 size);
+    void DrawSprite(resources::SpriteID id, math::Vec2 pos);
+    void DrawSprite(resources::SpriteID id, math::IVec2 pos);
+
+    math::IVec2 ScreenToWorld(math::IVec2 screenPos);
 } // namespace drop::renderer

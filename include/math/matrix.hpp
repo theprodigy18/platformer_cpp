@@ -18,6 +18,12 @@ namespace drop::math
                 f32 aw, bw, cw, dw;
             };
         };
+
+        Vec4& operator[](i32 col)
+        {
+            return values[col];
+        }
     };
 
+    Mat4 OrthographicProjection(f32 left, f32 right, f32 top, f32 bottom);
 } // namespace drop::math

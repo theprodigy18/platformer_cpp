@@ -13,7 +13,7 @@ namespace
     UpdateGameType* UpdateGamePtr {&core::UpdateGame};
 }
 
-void GameUpdate(renderer::RenderData* renderData, core::Input* input);
+void GameUpdate(core::GameState* gameState, renderer::RenderData* renderData, core::Input* input);
 void ReloadGameDLL(utils::BumpAllocator* transientStorage);
 
 int main()
@@ -28,14 +28,16 @@ int main()
     }
 
     utils::BumpAllocator persistentStorage {utils::MakeBumpAllocator(MB(50))};
+    core::g_gameState      = (core::GameState*) utils::BumpAlloc(&persistentStorage, sizeof(core::GameState));
     renderer::g_renderData = (renderer::RenderData*) utils::BumpAlloc(&persistentStorage, sizeof(renderer::RenderData));
     core::g_input          = (core::Input*) utils::BumpAlloc(&persistentStorage, sizeof(core::Input));
-    if (!renderer::g_renderData || !core::g_input)
+    if (!core::g_gameState || !renderer::g_renderData || !core::g_input)
     {
-        D_ASSERT(false, "Failed to allocate memory for renderer and core.");
+        D_ASSERT(false, "Failed to allocate memory for gamestate, renderdata, and input.");
         return -1;
     }
 
+    platform::PlatformFillKeyCodeLookupTable();
     platform::WindowInfo info {platform::PlatformCreateWindow(1280, 720, L"Platformer Game")};
     if (!info.handle || !info.dc)
     {
@@ -56,7 +58,7 @@ int main()
     {
         ReloadGameDLL(&transientStorage);
         platform::PlatformUpdateWindow(running);
-        GameUpdate(renderer::g_renderData, core::g_input);
+        GameUpdate(core::g_gameState, renderer::g_renderData, core::g_input);
         renderer::GLRenderFrame();
         platform::PlatformSwapBuffers();
 
@@ -73,9 +75,9 @@ int main()
     return 0;
 }
 
-void GameUpdate(renderer::RenderData* renderData, core::Input* input)
+void GameUpdate(core::GameState* gameState, renderer::RenderData* renderData, core::Input* input)
 {
-    UpdateGamePtr(renderData, input);
+    UpdateGamePtr(gameState, renderData, input);
 }
 
 void ReloadGameDLL(utils::BumpAllocator* transientStorage)

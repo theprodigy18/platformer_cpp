@@ -1,6 +1,7 @@
 #include "renderer/opengl.hpp"
 #include "renderer/render_interface.hpp"
 #include "core/input.hpp"
+#include "math/matrix.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
@@ -154,6 +155,7 @@ namespace drop::renderer
         GLuint g_textureID {0};
         GLuint g_transformSBOID {0};
         GLuint g_screenSizeID {0};
+        GLuint g_orthoProjectionID {0};
 
         void CALLBACK GLDebugCallback(GLenum source, GLenum type, GLuint id,
                                       GLenum severity, GLsizei length, const GLchar* message,
@@ -422,7 +424,8 @@ namespace drop::renderer
 
         // Uniforms.
         {
-            g_screenSizeID = glGetUniformLocation(g_programID, "screenSize");
+            g_screenSizeID      = glGetUniformLocation(g_programID, "screenSize");
+            g_orthoProjectionID = glGetUniformLocation(g_programID, "orthoProjection");
         }
 
         glEnable(GL_FRAMEBUFFER_SRGB);
@@ -447,11 +450,19 @@ namespace drop::renderer
         glClearDepth(0.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glViewport(0, 0, core::g_input->screenSizeX, core::g_input->screenSizeY);
+        glViewport(0, 0, core::g_input->screenSize.x, core::g_input->screenSize.y);
 
         // Copy screen size to the GPU.
-        math::Vec2 screenSize {(f32) core::g_input->screenSizeX, (f32) core::g_input->screenSizeY};
-        glUniform2fv(g_screenSizeID, 1, &screenSize.x);
+        math::Vec2 fScreenSize {math::IVec2ToVec2(core::g_input->screenSize)};
+        glUniform2fv(g_screenSizeID, 1, &fScreenSize.x);
+
+        // Send orthographic projection to the GPU.
+        OrthographicCamera2D camera {g_renderData->gameCamera};
+        math::Mat4           orthoProjection {math::OrthographicProjection(camera.position.x - camera.dimensions.x / 2.0f,
+                                                                           camera.position.x + camera.dimensions.x / 2.0f,
+                                                                           camera.position.y - camera.dimensions.y / 2.0f,
+                                                                           camera.position.y + camera.dimensions.y / 2.0f)};
+        glUniformMatrix4fv(g_orthoProjectionID, 1, GL_FALSE, &orthoProjection.ax);
 
         // Opaque objects.
         {
@@ -476,10 +487,12 @@ namespace drop::renderer
         glDeleteBuffers(1, &g_transformSBOID);
         TRACK_LEAK_FREE(&g_transformSBOID);
 
-        g_programID      = 0;
-        g_vao            = 0;
-        g_textureID      = 0;
-        g_transformSBOID = 0;
+        g_programID         = 0;
+        g_vao               = 0;
+        g_textureID         = 0;
+        g_transformSBOID    = 0;
+        g_screenSizeID      = 0;
+        g_orthoProjectionID = 0;
 
         wglMakeCurrent(nullptr, nullptr);
         wglDeleteContext(g_context);
