@@ -1,1 +1,1 @@
-# platformer_cpp
+# platformer game make with C++ from scratch.
